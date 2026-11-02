@@ -64,18 +64,26 @@ def main():
         name = name.split("[")[0]  # drop extras like requests[socks]
         checked += 1
 
+        requirement = f"{name}=={version}"
         spec = get_requires_python(name, version)
         if spec is None:
             not_found += 1
+            print(f"[DEBUG] {requirement:<30} checked | not found | min python: -     | compatible: -")
             continue
 
-        if spec and PYTHON_VERSION not in SpecifierSet(spec):
+        compatible = not spec or PYTHON_VERSION in SpecifierSet(spec)
+        if not compatible:
             incompatible += 1
 
         minimum = min_python(spec) if spec else None
+        print(
+            f"[DEBUG] {requirement:<30} checked | found     | min python: {str(minimum or '-'):<5} "
+            f"| compatible: {'yes' if compatible else 'no'} ({spec or 'no requires_python'})"
+        )
         if minimum and (highest is None or minimum > highest[0]):
-            highest = (minimum, f"{name}=={version}", spec)
+            highest = (minimum, requirement, spec)
 
+    print()
     print(f"Dependencies checked: {checked}")
     print(f"Not found on PyPI: {not_found}")
     print(f"Incompatible with Python {PYTHON_VERSION}: {incompatible}")
